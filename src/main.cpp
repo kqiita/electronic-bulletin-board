@@ -3,10 +3,11 @@
 #include "LittleFS.h"
 
 #include "util.h"
+#include "jiskan24.h"
+
 
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
-
 
 
 struct LGFX_HUB75 : public lgfx::LGFX_Device
@@ -117,54 +118,46 @@ struct LGFX_HUB75 : public lgfx::LGFX_Device
 };
 
 LGFX_HUB75 display;
+static const lgfx::U8g2font jiskan24( jiskan24_data );
+LGFX_Sprite sprite;
 
-#define comsemiexp_seibuchichibu "/com_semiexp-seibuchichibu.png"
-#define comexp_ikebukuro "/comexp-ikebukuro.png"
-#define exp_kotesashi "/exp-kotesashi.png"
-#define exp_seibushinjuku "/exp-seibu-shinjuku.png" 
-#define f_rapidexp_motomachichukagai "/f_rapidexp_motomachi-chukagai.png"
-#define haijimarapid_kodaira "/haijima_rapid-kodaira.png" 
-#define hijimaliner_seibutachikawa "/hijima_liner-seibutachikawa.png"
-#define local_seibushinjuku "/local-seibushinjuku.png"
-#define rapidexp_hanno "/rapidexp-hanno.png"
-#define rapid_irumashi "/rapid-irumashi.png"
-#define strain_ginzaitchome "/s_train-ginza-itchome.png"
-#define semiexp_shintokorozawa "/semi_exp-shintokorozawa.png"
+static constexpr char text[] = "急行";
+static constexpr size_t textlen = sizeof(text) / sizeof(text[0]);
+size_t textpos = 0;
 
 void setup() {
   display.init();
+  // 画面が横長になるように回転
+  if (display.width() < display.height()) display.setRotation(display.getRotation() ^ 1);
+
+  sprite.setColorDepth(8);
+  sprite.setFont(&jiskan24);
+  sprite.setTextWrap(false);        // 右端到達時のカーソル折り返しを禁止
+  sprite.createSprite(display.width() + 36, 36); // 画面幅+１文字分の横幅を用意
+
+
   LittleFS.begin();
-  display.drawPngFile(LittleFS, IMAGE_PATH,0,0);
+  
   
 }
 
 void loop(){
-  /*
-  display.drawPngFile(LittleFS,comsemiexp_seibuchichibu,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,comexp_ikebukuro,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,exp_kotesashi,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,exp_seibushinjuku,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,f_rapidexp_motomachichukagai,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,haijimarapid_kodaira,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,hijimaliner_seibutachikawa,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,local_seibushinjuku,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,rapidexp_hanno,0,0);
-  delay(1000);
-  display.drawPngFile(LittleFS,rapid_irumashi,0,0);
-  delay(1000);
-  */
-  
+  int32_t cursor_x = sprite.getCursorX() - 1;   // 現在のカーソル位置を取得し、1ドット左に移動
+  if (cursor_x <= 0) // カーソル位置が左端に到達している場合は一周したと判断
+  {
+    textpos = 0;            // 文字列の読取り位置をリセット
+    cursor_x = display.width(); // 新たな文字が画面右端に描画されるようにカーソル位置を変更
+  }
 
-  /*  if(int32_t(millis()/50)%64 < 64){
-    sprite1.pushSprite(-int32_t(millis()/50),8);
-    delay(10);
-  }*/
+  sprite.setCursor(cursor_x, 0); // カーソル位置を更新
+  sprite.scroll(-1, 0);          // キャンバスの内容を1ドット左にスクロール
+  while (textpos < textlen && cursor_x <= display.width()) // 画面右端に文字が書けるか判定
+  {
+    sprite.print(text[textpos++]);   // 1バイトずつ出力 (マルチバイト文字でもこの処理で動作します)
+    cursor_x = sprite.getCursorX();  // 出力後のカーソル位置を取得
+  }
+
+  sprite.pushSprite(&display, 0, 0);
+
+  delay(200);
 }

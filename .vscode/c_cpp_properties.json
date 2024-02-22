@@ -8,10 +8,10 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/Users/KQiit/local_folder/led_matrix/src",
+                "C:/Users/KQiit/local_folder/electronic-bulletin-board/src",
                 "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src",
                 "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
-                "C:/Users/KQiit/local_folder/led_matrix/.pio/libdeps/main/LovyanGFX/src",
+                "C:/Users/KQiit/local_folder/electronic-bulletin-board/.pio/libdeps/main/LovyanGFX/src",
                 "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                 "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                 "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
@@ -238,10 +238,10 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/Users/KQiit/local_folder/led_matrix/src",
+                    "C:/Users/KQiit/local_folder/electronic-bulletin-board/src",
                     "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src",
                     "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
-                    "C:/Users/KQiit/local_folder/led_matrix/.pio/libdeps/main/LovyanGFX/src",
+                    "C:/Users/KQiit/local_folder/electronic-bulletin-board/.pio/libdeps/main/LovyanGFX/src",
                     "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/Wire/src",
                     "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/libraries/SPI/src",
                     "C:/Users/KQiit/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/newlib/platform_include",
