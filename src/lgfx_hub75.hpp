@@ -54,7 +54,7 @@ public:
       //cfg.pin_addr_e = GPIO_NUM_2;
 
       // データ送信速度
-      cfg.freq_write = 13333334;
+      cfg.freq_write = 23333334;
 
       // パネルの行選択の仕様に応じて指定する
       //cfg.address_mode = cfg.address_shiftreg;
@@ -82,7 +82,7 @@ public:
       // 複数枚使用する場合(Panel_HUB75_Multi使用時) は表示領域全体の縦横サイズを指定
 
 #ifdef MULTI
-      cfg.memory_width  = cfg.panel_width  = 128;
+      cfg.memory_width  = cfg.panel_width  = 192;
       cfg.memory_height = cfg.panel_height = 32;
 #else
       cfg.memory_width  = cfg.panel_width  = 64;
@@ -99,7 +99,7 @@ public:
       auto cfg = _panel_instance.config_detail();
 
       // 構成パネルの総枚数を指定
-      cfg.panel_count = 2;
+      cfg.panel_count = 3;
 
       // パネル1枚の幅を指定
       cfg.single_width = 64;
@@ -113,7 +113,7 @@ public:
       //  _panel_instance.setPanelPosition( パネル通し番号, 横座標, 縦座標, 回転方向);
       _panel_instance.setPanelPosition( 0,   0,   0,   0);
       _panel_instance.setPanelPosition( 1,  64,   0,   0);
-      
+      _panel_instance.setPanelPosition( 2, 128,   0,   0);
     }
 #endif
   }
