@@ -54,7 +54,7 @@ public:
       //cfg.pin_addr_e = GPIO_NUM_2;
 
       // データ送信速度
-      cfg.freq_write = 23333334;
+      cfg.freq_write = 13333334;
 
       // パネルの行選択の仕様に応じて指定する
       //cfg.address_mode = cfg.address_shiftreg;
