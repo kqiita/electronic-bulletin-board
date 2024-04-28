@@ -1,17 +1,4 @@
-#include <Arduino.h>
-#include "FS.h"
-#include "LittleFS.h"
-
-#include <stdio.h>
-#include <string.h>
-
 #include "util.h"
-#include "jiskan24.h"
-#include "lgfx_hub75.hpp"
-
-#define LGFX_USE_V1
-#include <LovyanGFX.hpp>
-
 
 LGFX_HUB75 display;
 static const lgfx::U8g2font jiskan24(jiskan24_data);
@@ -19,8 +6,10 @@ LGFX_Sprite sprite1(&display);
 LGFX_Sprite sprite2(&display);
 LGFX_Sprite sprite3(&display);
 LGFX_Sprite sprite4(&display);
+LGFX_Sprite sprite5(&display);
 
-int offset_width = 32; // これがないと32x64+32x32でつなげる時に32横にずれる
+
+int offset_width = 32; // 32x64+32x32でつなげる時に32横にずれるため
 
 static constexpr char text[] = "本日もお越しいただきありがとうございます！！";
 static constexpr size_t textlen = sizeof(text) / sizeof(text[0]);
@@ -34,6 +23,7 @@ void setup()
   sprite2.createSprite(144, 32);
   sprite3.createSprite(display.width() + 24, 32);
   sprite4.createSprite(160,32);
+  sprite5.createSprite(160,32);
   sprite1.drawPngFile(LittleFS, img_ko8000_led, 0, 0, 48, 32, 114 * 0 + 0, 32 * 0);
   sprite1.drawPngFile(LittleFS, img_ko8000_led, 48, 0, 96, 32, 144 * 0 + 48, 32 * 1);
   sprite2.drawPngFile(LittleFS, img_ko8000_led, 0 , 0, 48, 32, 0 , 0 + 32*1);
@@ -44,6 +34,7 @@ void setup()
   sprite3.setTextSize(1.0);
   sprite3.setTextWrap(false);
   sprite4.drawPngFile(LittleFS,img_uec,0,0,160,32,0,0);
+  sprite5.drawPngFile(LittleFS,img_uec,0,0,160,32,0,32);
 }
 
 void loop()
@@ -57,6 +48,8 @@ void loop()
   
   */
   sprite4.pushSprite(offset_width,0);
+  delay(5000);
+  sprite5.pushSprite(offset_width,0);
   delay(5000);
   display.fillScreen(TFT_BLACK);
 
