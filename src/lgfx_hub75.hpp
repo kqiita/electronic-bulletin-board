@@ -3,7 +3,7 @@
 #define LGFX_USE_V1
 
 #include <LovyanGFX.hpp>
-#include "util.h"
+
 
 /// 独自の設定を行うクラスを、LGFX_Deviceから派生して作成します。
 class LGFX_HUB75 : public lgfx::LGFX_Device
