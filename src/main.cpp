@@ -1,6 +1,6 @@
 #include "util.h"
 
-const IPAddress ip(192, 168, 1, 255);
+const IPAddress ip(192, 168, 1, 1);
 const IPAddress subnet(255, 255, 255, 0);
 
 LGFX_HUB75 display;
@@ -136,14 +136,14 @@ void setup()
   Serial.begin(115200);
   Serial.println();
   Serial.println("Configuring access point...");
-  if (!WiFi.softAP(wificonfig::ssid, wificonfig::passphrase))
+  if (!WiFi.softAP(wificonfig::ssid, wificonfig::passphrase,1))
   {
     log_e("Soft AP creation failed.");
     while (1)
       ;
   }
-  WiFi.mode(WIFI_MODE_AP);
-  WiFi.softAP(wificonfig::ssid, wificonfig::passphrase, 1);
+  //WiFi.mode(WIFI_MODE_AP);
+  //WiFi.softAP(wificonfig::ssid, wificonfig::passphrase, 1);
   delay(100);
   WiFi.softAPConfig(ip, ip, subnet);
   IPAddress myIP = WiFi.softAPIP();
