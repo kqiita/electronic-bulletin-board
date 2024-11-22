@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja" >
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電光掲示板コントローラー</title>
+    <meta name="discription" content="電光掲示板コントローラー|きーたくん（はんかくくん）のページ">
+    <!--icon-->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="./syahuneko-ver1-r225g234b205.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="./syahuneko-ver1-r225g234b205.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="./syahuneko-ver1-r225g234b205.png" />
+    <link rel="apple-touch-icon-precomposed" href="./syahuneko-ver1-r225g234b205.png" />
+    <link rel="icon" sizes="any" href="./syahuneko-ver1-r225g234b205.png" color="#0bd">
+
+    <!---->
+    <style>
+        body{
+            margin: 0%;
+            padding: 0%;
+        }
+
+        #main_content {
+            display: flex;
+            flex-direction: column;
+
+        }
+        #main_content >div{
+            padding: 0% 2%;
+            flex: 300px;
+        }
+
+        #input_form {
+
+        }
+        #input_form > form{
+            display: grid;
+            grid-template-columns: auto;
+        }
+        #input_text {
+            width: 90%;
+            padding: 10px 15px;
+            font-size: 20px;
+            border-radius: 4px;
+            border: 2px #555555 solid;
+            box-sizing: border-box
+        }
+        #input_text:focus{
+            border: 2px #bcb56e solid;
+            z-index: 10;
+            outline: 0;
+        }
+        #input_file {
+            font-size: 20px;
+        }
+        #input_file::-webkit-file-upload-button{
+            border-color: #9d9c9c;
+            border-radius: 16px;
+            background-color: #ededed;
+        }
+        button[type="submit"] {
+            font-size: 20px;
+            border-radius: 16px;
+            border-color: #9d9c9c;
+            background-color: #ededed;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="title">
+    </div>
+    <nav id="navigation_bar">
+
+    </nav>
+    <div id="main_content">
+        <div id="now_displaying">
+            <h3>出力</h3>
+            <canvas></canvas>
+            <img src="" alt="">
+        </div>
+        <div id="input_form">
+            <h3>入力フォーム</h3>
+            <form action="/textmsg" method="post" >
+                <div>
+                    <label for="input_text">表示するテキスト</label>
+                    <input type="text" name="input_text" id="input_text">
+                    <button id="text_submit_btn" type="submit">送信</button>
+                </div>
+            </form>
+            <form action="/imgmsg" method="post" enctype="multipart/form-data">
+                <div>
+                    <label for="input_file">表示する画像(png)</label>
+                    <input type="file" name="input_file" id="input_file" accept=".png">
+                    <button id="file_submit_btn" type="submit">送信</button>
+                </div>
+            </form>
+        </div>
+        <div>
+            <p></p>
+        </div>
+    </div>
+    <script>
+        /*
+        *read https://developer.mozilla.org/ja/docs/Web/API/WebSockets_API
+        */
+        /*
+        let socket = new WebSocket("ws://" + window.location.hostname + ":80/ws");
+        alert(socket);
+        socket.onopen = (event) => {
+            console.log("WebSocket connected");
+        };
+        socket.onclose = (event) => {
+            console.log("WebSocket disconnected");
+        };
+        socket.onmessage = (event) => {
+            console.log(`Received: ${event.data}`);
+        };
+        socket.onerror = (event) => {
+            console.log("WebSocket error: ", event);
+        };
+        */
+        const ctx = document.body.querySelector('canvas').getContext("2d");
+
+        let textbtn = document.querySelector("#text_submit_btn");
+        textbtn.onclick = async (event) => {
+            event.preventDefault();
+            await fetch("http://"+ window.location.hostname + "/",{
+                method:"POST",
+                body:document.querySelector("#input_text").value
+            })
+            alert(document.querySelector("#input_text").value);
+        };
+
+        let filebtn = document.querySelector("#file_submit_btn");
+        filebtn.onclick = async (event) => {
+            const img = new Image();
+            img.onload=e=>{
+                URL.revokeObjectURL(img.src);
+                ctx.drawImage(img,0,0);
+            };
+            img.src = URL.createObjectURL(document.querySelector("#input_file").files[0]);
+            arr=[...ctx.getImageData(0,0,ctx.canvas.width,ctx.canvas.height).data];
+            event.preventDefault();
+            await fetch("http://"+ window.location.hostname + "/",{
+                method:"POST",
+                //body:document.querySelector("#input_file").files[0]
+                body:ctx.getImageData(0,0,ctx.canvas.width,ctx.canvas.height).data
+            });
+        };
+
+    </script>
+</body>
+
+</html>

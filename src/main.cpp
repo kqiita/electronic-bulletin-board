@@ -10,6 +10,7 @@ LGFX_Sprite sprite2(&display);
 LGFX_Sprite sprite3(&display);
 LGFX_Sprite sprite4(&display);
 LGFX_Sprite sprite5(&display);
+LGFX_Sprite sprite6(&display);
 
 int offset_width = 32; // 32x64+32x32でつなげる時に32横にずれるため
 
@@ -18,118 +19,58 @@ static constexpr size_t textlen = sizeof(text) / sizeof(text[0]);
 size_t textpos = 0;
 int32_t cursor_x;
 
+/*asyncwebserver*/
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
-{
-  AwsFrameInfo *info = (AwsFrameInfo *)arg;
-  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
-  {
-    
-    data[len] = 0;
-    Serial.println((char *)data); 
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, (char *)data);
+//flag to use from web update to reboot the ESP
+bool shouldReboot = false;
+
+//handling
+void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+  //Handle upload
+  if(!index){
+    Serial.printf("UploadStart: %s\n", filename.c_str());
   }
-
-}
-
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
-{
-  switch (type)
-  {
-  case WS_EVT_CONNECT:
-    Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-    break;
-  case WS_EVT_DISCONNECT:
-    Serial.printf("WebSocket client #%u disconnected\n", client->id());
-    break;
-  case WS_EVT_DATA:
-    handleWebSocketMessage(arg, data, len);
-    break;
+  for(size_t i=0; i<len; i++){
+    Serial.write(data[i]);
   }
-
-}
-
-void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
-  if(type == WS_EVT_CONNECT){
-    Serial.printf("ws[%s][%u] connect\n", server->url(), client->id());
-    client->printf("Hello Client %u :)", client->id());
-    client->ping();
-  } else if(type == WS_EVT_DISCONNECT){
-    Serial.printf("ws[%s][%u] disconnect\n", server->url(), client->id());
-  } else if(type == WS_EVT_ERROR){
-    Serial.printf("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
-  } else if(type == WS_EVT_PONG){
-    Serial.printf("ws[%s][%u] pong[%u]: %s\n", server->url(), client->id(), len, (len)?(char*)data:"");
-  } else if(type == WS_EVT_DATA){
-    AwsFrameInfo * info = (AwsFrameInfo*)arg;
-    String msg = "";
-    if(info->final && info->index == 0 && info->len == len){
-      //the whole message is in a single frame and we got all of it's data
-      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
-
-      if(info->opcode == WS_TEXT){
-        for(size_t i=0; i < info->len; i++) {
-          msg += (char) data[i];
-        }
-      } else {
-        char buff[3];
-        for(size_t i=0; i < info->len; i++) {
-          sprintf(buff, "%02x ", (uint8_t) data[i]);
-          msg += buff ;
-        }
-      }
-      Serial.printf("%s\n",msg.c_str());
-
-      if(info->opcode == WS_TEXT)
-        client->text("I got your text message");
-      else
-        client->binary("I got your binary message");
-    } else {
-      //message is comprised of multiple frames or the frame is split into multiple packets
-      if(info->index == 0){
-        if(info->num == 0)
-          Serial.printf("ws[%s][%u] %s-message start\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-        Serial.printf("ws[%s][%u] frame[%u] start[%llu]\n", server->url(), client->id(), info->num, info->len);
-      }
-
-      Serial.printf("ws[%s][%u] frame[%u] %s[%llu - %llu]: ", server->url(), client->id(), info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
-
-      if(info->opcode == WS_TEXT){
-        for(size_t i=0; i < len; i++) {
-          msg += (char) data[i];
-        }
-      } else {
-        char buff[3];
-        for(size_t i=0; i < len; i++) {
-          sprintf(buff, "%02x ", (uint8_t) data[i]);
-          msg += buff ;
-        }
-      }
-      Serial.printf("%s\n",msg.c_str());
-
-      if((info->index + len) == info->len){
-        Serial.printf("ws[%s][%u] frame[%u] end[%llu]\n", server->url(), client->id(), info->num, info->len);
-        if(info->final){
-          Serial.printf("ws[%s][%u] %s-message end\n", server->url(), client->id(), (info->message_opcode == WS_TEXT)?"text":"binary");
-          if(info->message_opcode == WS_TEXT)
-            client->text("I got your text message");
-          else
-            client->binary("I got your binary message");
-        }
-      }
-    }
+  if(final){
+    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
   }
 }
 
+void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+  if(!index){
+    Serial.printf("UploadStart: %s\n", filename.c_str());
+  }
+  for(size_t i=0; i<len; i++){
+    Serial.write(data[i]);
+  }
+  if(final){
+    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
+  }
+}
 
+void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+  if(!index){
+    Serial.printf("BodyStart: %u B\n", total);
+  }
+  for(size_t i=0; i<len; i++){
+    Serial.write(data[i]);
+  }
+  if(index + len == total){
+    Serial.printf("BodyEnd: %u B\n", total);
+  }
+}
 
 void setup()
 {
+
   display.init();
-    if(!LittleFS.begin(true)){
+  sprite6.createSprite(160,32);
+
+  if(!LittleFS.begin(true)){
     Serial.println("An Error has occurred while mounting LittleFS");
     return;
   }
@@ -148,81 +89,85 @@ void setup()
   WiFi.softAPConfig(ip, ip, subnet);
   IPAddress myIP = WiFi.softAPIP();
 
-  ws.onEvent(onWsEvent);
-  server.addHandler(&ws);
-
-
-  server.on("/", HTTP_GET,[](AsyncWebServerRequest *request){
-    request->send(LittleFS,"/www/index.html",String());
+  server.onRequestBody(handleBody);
+  //server.serveStatic("/",LittleFS,"/www/");
+  server.on("/",HTTP_GET,[](AsyncWebServerRequest *request){
+    request->send(LittleFS,"/index.html",String(),false);
+    Serial.printf("GET: / \n");
   });
-  server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-	  server.onNotFound([](AsyncWebServerRequest *request){
-    Serial.printf("NOT_FOUND: ");
-    if(request->method() == HTTP_GET)
-      Serial.printf("GET");
-    else if(request->method() == HTTP_POST)
-      Serial.printf("POST");
-    else if(request->method() == HTTP_DELETE)
-      Serial.printf("DELETE");
-    else if(request->method() == HTTP_PUT)
-      Serial.printf("PUT");
-    else if(request->method() == HTTP_PATCH)
-      Serial.printf("PATCH");
-    else if(request->method() == HTTP_HEAD)
-      Serial.printf("HEAD");
-    else if(request->method() == HTTP_OPTIONS)
-      Serial.printf("OPTIONS");
-    else
-      Serial.printf("UNKNOWN");
-    Serial.printf(" http://%s%s\n", request->host().c_str(), request->url().c_str());
-
-    if(request->contentLength()){
-      Serial.printf("_CONTENT_TYPE: %s\n", request->contentType().c_str());
-      Serial.printf("_CONTENT_LENGTH: %u\n", request->contentLength());
-    }
-
+  server.on("/",HTTP_POST,[](AsyncWebServerRequest *request){
     int headers = request->headers();
     int i;
     for(i=0;i<headers;i++){
-      AsyncWebHeader* h = request->getHeader(i);
-      Serial.printf("_HEADER[%s]: %s\n", h->name().c_str(), h->value().c_str());
+      Serial.printf("HEADER[%s]: %s\n", request->headerName(i).c_str(), request->header(i).c_str());
     }
-
-    int params = request->params();
-    for(i=0;i<params;i++){
-      AsyncWebParameter* p = request->getParam(i);
-      if(p->isFile()){
-        Serial.printf("_FILE[%s]: %s, size: %u\n", p->name().c_str(), p->value().c_str(), p->size());
-      } else if(p->isPost()){
-        Serial.printf("_POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-      } else {
-        Serial.printf("_GET[%s]: %s\n", p->name().c_str(), p->value().c_str());
+    Serial.printf("POST: %s \n",request->contentType());
+    //POSTデータを取得
+    String postData = "";
+    if (request->hasParam("data", true)) {
+      postData = request->getParam("data", true)->value();
+    }
+    Serial.printf(" %s\n",postData);
+    sprite6.setTextFont(&jiskan24);
+    sprite6.setTextSize(1.0);
+    sprite6.print(postData);
+  });
+  
+  server.on("/",HTTP_POST,[](AsyncWebServerRequest *request) {
+      request->send(200);
+      Serial.printf("post file \n");
+      int headers = request->headers();
+      int i;
+      for(i=0;i<headers;i++){
+        Serial.printf("HEADER[%s]: %s\n", request->headerName(i).c_str(), request->header(i).c_str());
       }
+    },NULL,[](AsyncWebServerRequest *request,uint8_t *data, size_t len, size_t index, size_t total){
+      String postData = "";
+      File file =LittleFS.open("/image.png","w");
+      if (!file) {
+        Serial.println("Failed to open file for writing");
+        return;
+      }
+      Serial.printf("body: \n");
+      for (size_t i = 0; i < len; i++) {
+        //Serial.print((char)data[i]);
+        postData += (char)data[i];
+      }
+      Serial.printf("%s",postData);
+      if (file.print(postData)){
+        Serial.println("File written");
+      } else {
+        Serial.println("Write failed");
+      }
+      file.close();
+      Serial.printf("fin\n");
+
+  });
+  
+  server.onNotFound([](AsyncWebServerRequest *request) {
+    if (request->method() == HTTP_OPTIONS) {
+      request->send(200);
+      Serial.printf("option \n");
+    } else {
+      request->send(404);
+      Serial.printf("not found \n");
     }
-
-    request->send(404);
   });
-  server.onFileUpload([](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final){
-    if(!index)
-      Serial.printf("UploadStart: %s\n", filename.c_str());
-    Serial.printf("%s", (const char*)data);
-    if(final)
-      Serial.printf("UploadEnd: %s (%u)\n", filename.c_str(), index+len);
-  });
-
 
   server.begin();
+  //server is setuped
   Serial.print("SSID= ");
   Serial.println(wificonfig::ssid);
   Serial.print("Fixed IP addr= ");
   Serial.println(myIP);
   Serial.println("Server started");
-
+  /*
   sprite1.createSprite(144, 32);
   sprite2.createSprite(144, 32);
   sprite3.createSprite(display.width() + 24, 32);
   sprite4.createSprite(160, 32);
   sprite5.createSprite(160, 32);
+  
   sprite1.drawPngFile(LittleFS, img_ko8000_led, 0, 0, 48, 32, 114 * 0 + 0, 32 * 0);
   sprite1.drawPngFile(LittleFS, img_ko8000_led, 48, 0, 96, 32, 144 * 0 + 48, 32 * 1);
   sprite2.drawPngFile(LittleFS, img_ko8000_led, 0, 0, 48, 32, 0, 0 + 32 * 1);
@@ -234,12 +179,15 @@ void setup()
   sprite3.setTextWrap(false);
   sprite4.drawPngFile(LittleFS, img_uec, 0, 0, 160, 32, 0, 0);
   sprite5.drawPngFile(LittleFS, img_uec, 0, 0, 160, 32, 0, 32);
+  */
+       sprite6.drawPngFile(LittleFS,"image.png",0,0,160,32,0,0);
 }
 
 void loop()
 {
-
-  ws.cleanupClients();
+  sprite6.pushSprite(offset_width,0);
+  delay(5000);
+  //ws.cleanupClients();
   /*
   sprite1.pushSprite(offset_width, 0);
   delay(5000);
@@ -248,6 +196,8 @@ void loop()
 
 
   */
+
+ /*
   sprite4.pushSprite(offset_width, 0);
   delay(5000);
   sprite5.pushSprite(offset_width, 0);
@@ -271,4 +221,5 @@ void loop()
     cursor_x = sprite3.getCursorX() - 1;
   }
   sprite3.fillScreen(TFT_BLACK);
+  */
 }
