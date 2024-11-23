@@ -2,3 +2,4 @@
 .vscode
 
 src/wifissid.h
+src/wificonfig.h
