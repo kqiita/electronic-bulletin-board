@@ -1,5 +1,5 @@
-.pio
-.vscode
+program/.pio
+program/.vscode
 
-src/wifissid.h
-src/wificonfig.h
+program/src/wifissid.h
+program/src/wificonfig.h
