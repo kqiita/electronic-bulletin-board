@@ -21,48 +21,9 @@ int32_t cursor_x;
 
 /*asyncwebserver*/
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
 
 //flag to use from web update to reboot the ESP
 bool shouldReboot = false;
-
-//handling
-void onUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-  //Handle upload
-  if(!index){
-    Serial.printf("UploadStart: %s\n", filename.c_str());
-  }
-  for(size_t i=0; i<len; i++){
-    Serial.write(data[i]);
-  }
-  if(final){
-    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
-  }
-}
-
-void handleUpload(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-  if(!index){
-    Serial.printf("UploadStart: %s\n", filename.c_str());
-  }
-  for(size_t i=0; i<len; i++){
-    Serial.write(data[i]);
-  }
-  if(final){
-    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
-  }
-}
-
-void handleBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
-  if(!index){
-    Serial.printf("BodyStart: %u B\n", total);
-  }
-  for(size_t i=0; i<len; i++){
-    Serial.write(data[i]);
-  }
-  if(index + len == total){
-    Serial.printf("BodyEnd: %u B\n", total);
-  }
-}
 
 void setup()
 {
@@ -89,7 +50,6 @@ void setup()
   WiFi.softAPConfig(ip, ip, subnet);
   IPAddress myIP = WiFi.softAPIP();
 
-  server.onRequestBody(handleBody);
   //server.serveStatic("/",LittleFS,"/www/");
   server.on("/",HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(LittleFS,"/index.html",String(),false);
@@ -105,14 +65,17 @@ void setup()
     //POSTデータを取得
     String postData = "";
     if (request->hasParam("data", true)) {
+      Serial.printf("name: %s",request->getParam("data",true)->name());
+      Serial.printf("value: %s",request->getParam("data", true)->value());
+
       postData = request->getParam("data", true)->value();
     }
     Serial.printf(" %s\n",postData);
-    sprite6.setTextFont(&jiskan24);
-    sprite6.setTextSize(1.0);
-    sprite6.print(postData);
+    //sprite6.setTextFont(&jiskan24);
+    //sprite6.setTextSize(1.0);
+    //sprite6.print(postData);
   });
-  
+  /*
   server.on("/",HTTP_POST,[](AsyncWebServerRequest *request) {
       request->send(200);
       Serial.printf("post file \n");
@@ -143,7 +106,7 @@ void setup()
       Serial.printf("fin\n");
 
   });
-  
+  */
   server.onNotFound([](AsyncWebServerRequest *request) {
     if (request->method() == HTTP_OPTIONS) {
       request->send(200);
@@ -180,12 +143,12 @@ void setup()
   sprite4.drawPngFile(LittleFS, img_uec, 0, 0, 160, 32, 0, 0);
   sprite5.drawPngFile(LittleFS, img_uec, 0, 0, 160, 32, 0, 32);
   */
-       sprite6.drawPngFile(LittleFS,"image.png",0,0,160,32,0,0);
+  //     sprite6.drawPngFile(LittleFS,"image.png",0,0,160,32,0,0);
 }
 
 void loop()
 {
-  sprite6.pushSprite(offset_width,0);
+  //sprite6.pushSprite(offset_width,0);
   delay(5000);
   //ws.cleanupClients();
   /*
