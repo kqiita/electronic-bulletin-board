@@ -53,7 +53,8 @@ void setup()
   //server.serveStatic("/",LittleFS,"/www/");
   server.on("/",HTTP_GET,[](AsyncWebServerRequest *request){
     request->send(LittleFS,"/index.html",String(),false);
-    Serial.printf("GET: / \n");
+    Serial.printf("server recieved GET request \n");
+    Serial.printf("server send htmlpage\n");
   });
   server.on("/",HTTP_POST,[](AsyncWebServerRequest *request){
     int headers = request->headers();
